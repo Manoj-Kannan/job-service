@@ -10,4 +10,10 @@ public class ChainFactory extends ChainBase {
         chain.addCommand(new ScheduledJobExecutionCommand());
         return chain;
     }
+
+    public static ChainBase instantJobExecutionChain(long transactionTimeOut) {
+        ChainBase chain = new ChainBase();
+        chain.addCommand(new InstantJobExecutionCommand());
+        return chain;
+    }
 }

@@ -5,6 +5,8 @@ public interface JobConfig {
 
     String getExecFilePath();
 
+    boolean isEnabledService();
+
     void emailException(String fromClass, String msg, Throwable t);
 
     void emailException(String fromClass, String msg, String reason);

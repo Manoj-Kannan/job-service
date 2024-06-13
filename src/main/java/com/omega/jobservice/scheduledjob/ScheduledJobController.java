@@ -29,7 +29,9 @@ public class ScheduledJobController {
         config = jobConfig;
 
         parseJobConfObject();
-        parseExecutorConfObject();
+        if (jobConfig.isEnabledService()) {
+            parseExecutorConfObject();
+        }
 
         LOGGER.info("Scheduler Jobs : " + JOBS_MAP);
         LOGGER.info("Scheduler Executors : " + EXECUTORS);

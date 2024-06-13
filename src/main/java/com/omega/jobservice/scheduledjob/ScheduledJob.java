@@ -15,12 +15,14 @@ import java.time.Instant;
 
 @Getter
 @Setter
-public class ScheduledJob implements Runnable {
+public abstract class ScheduledJob implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(ScheduledJob.class.getName());
 
     private JobContext jobContext = null;
     private ScheduledJobExecutor executor = null;
     private int retryExecutionCount = 1;
+
+    public abstract void execute(JobContext jc) throws Exception;
 
     @Override
     public void run() {
