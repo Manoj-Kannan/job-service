@@ -47,7 +47,7 @@ public abstract class InstantJob {
         } finally {
             JobContext job = new JobContext();
             job.setJobName(jobName);
-            job.setPeriodic(false);
+            job.setIsPeriodic(false);
             job.setExecutorName("instant");
 
             InstantJobController.getConfig().log(job, (System.currentTimeMillis() - startTime), jobStatus);
