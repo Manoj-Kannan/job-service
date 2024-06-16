@@ -1,17 +1,17 @@
-package com.omega.jobservice.queue;
+package com.omega.jobservice.queue.service;
+
+import com.omega.jobservice.queue.context.QueueMessage;
+import com.omega.jobservice.queue.dao.InstantJobsQueueDAO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
 import java.util.List;
 
-public class ObjectQueue {
-    private String tableName;
-    private DBQueueService dbQueueService;
-
-    public ObjectQueue(String tableName) {
-        this.tableName = tableName;
-        dbQueueService = new DBQueueService(tableName);
-    }
-
+@Service
+public class InstantJobsQueueService {
+    @Autowired
+    InstantJobsQueueDAO instantJobsQueueDao;
 
     public boolean sendMessage(String jobName, Serializable serializableMessage) throws Exception {
         return false;

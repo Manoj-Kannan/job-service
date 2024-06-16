@@ -1,5 +1,7 @@
 package com.omega.jobservice.queue;
 
+import com.omega.jobservice.queue.context.QueueMessage;
+
 import java.util.List;
 
 public interface QueueService {

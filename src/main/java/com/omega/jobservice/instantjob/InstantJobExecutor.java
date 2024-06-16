@@ -2,8 +2,8 @@ package com.omega.jobservice.instantjob;
 
 import com.omega.jobservice.init.InstantJobConf;
 import com.omega.jobservice.jobconfig.JobTimeOutContext;
-import com.omega.jobservice.queue.ObjectQueue;
-import com.omega.jobservice.queue.QueueMessage;
+import com.omega.jobservice.queue.service.InstantJobsQueueService;
+import com.omega.jobservice.queue.context.QueueMessage;
 import com.omega.jobservice.util.JobConstants;
 import org.apache.commons.chain.Context;
 import org.apache.log4j.LogManager;
@@ -24,20 +24,18 @@ public class InstantJobExecutor implements Runnable {
 
     private int maxThreads;
     private final String name;
-    private final String tableName;
     private final int dataRetention;
     private final int pollingFrequency;
     private boolean isRunning = false;
-    private ObjectQueue objectQueue = null;
+    private InstantJobsQueueService instantJobsQueueService = null;
     private ThreadPoolExecutor threadPoolExecutor = null;
     private final ConcurrentMap<String, JobTimeOutContext> jobMonitorMap = new ConcurrentHashMap<>();
 
-    public InstantJobExecutor(String name, String tableName, int maxThreads, int queueSize, int dataRetention, int pollingFrequency) {
+    public InstantJobExecutor(String name, int maxThreads, int queueSize, int dataRetention, int pollingFrequency) {
         this.name = name;
-        this.tableName = tableName;
         this.dataRetention = dataRetention;
         this.pollingFrequency = pollingFrequency;
-        this.objectQueue = new ObjectQueue(tableName);
+        this.instantJobsQueueService = new InstantJobsQueueService();
         this.threadPoolExecutor = new ThreadPoolExecutor(this.maxThreads, //core pool size
                 this.maxThreads, //max pool size
                 KEEP_ALIVE,
@@ -56,12 +54,12 @@ public class InstantJobExecutor implements Runnable {
                 if (noOfThreads == 0) {
                     continue;
                 }
-                List<QueueMessage> messageList = objectQueue.getMessageObjects(noOfThreads);
+                List<QueueMessage> messageList = instantJobsQueueService.getMessageObjects(noOfThreads);
                 if (messageList != null) {
                     for (QueueMessage message : messageList) {
                         Context context = (Context) message.getDeserializedMessage();
                         if (context == null) {
-                            objectQueue.deleteMessageObject(message.getId());
+                            instantJobsQueueService.deleteMessageObject(message.getId());
                         }
 
                         String jobName = (String) context.get(JobConstants.INSTANT_JOB_NAME);
@@ -77,7 +75,7 @@ public class InstantJobExecutor implements Runnable {
                                     final InstantJob job = jobClass.newInstance();
                                     if (instantJob.getTransactionTimeout() != InstantJobConf.DEFAULT_TIME_OUT) {
                                         try {
-                                            objectQueue.changeTransactionTimeout(message.getId(), (int) TimeUnit.SECONDS.toMinutes(instantJob.getTransactionTimeout()));
+                                            instantJobsQueueService.changeTransactionTimeout(message.getId(), (int) TimeUnit.SECONDS.toMinutes(instantJob.getTransactionTimeout()));
                                         } catch (Exception e) {
                                             LOGGER.info("Ignoring job " + jobName + " since it's not available");
                                             continue;
@@ -130,14 +128,14 @@ public class InstantJobExecutor implements Runnable {
     }
 
     public void addJob(String jobName, Context context) throws Exception {
-        if (!objectQueue.sendMessage(jobName, (Serializable) context)) {
+        if (!instantJobsQueueService.sendMessage(jobName, (Serializable) context)) {
             throw new IllegalArgumentException("Unable to add instant job to queue");
         }
     }
 
     public void endJob(String jobId) {
         try {
-            objectQueue.deleteMessageObject(jobId);
+            instantJobsQueueService.deleteMessageObject(jobId);
         } catch (Exception e) {
             LOGGER.info("Exception occurred on deleting Instant Job :  " + e);
         }
@@ -168,9 +166,9 @@ public class InstantJobExecutor implements Runnable {
         long deletionTillDate = (System.currentTimeMillis() - ((long) dataRetention * 24 * 60 * 60 * 1000));
 
         try {
-            objectQueue.deleteQueue(deletionTillDate);
+            instantJobsQueueService.deleteQueue(deletionTillDate);
         } catch (Exception e) {
-            LOGGER.info("Exception occurred in InstantJob Queue Deletion :  " + tableName + " with tillDate --" + deletionTillDate, e);
+            LOGGER.info("Exception occurred in InstantJob Queue Deletion with tillDate --" + deletionTillDate, e);
         }
     }
 }

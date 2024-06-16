@@ -1,4 +1,4 @@
-package com.omega.jobservice.queue;
+package com.omega.jobservice.queue.context;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -59,8 +59,8 @@ public class InstantJobController {
 
         if (executorsConf.getExecutors() != null) {
             for (InstantJobExecutorConf.Executor executor : executorsConf.getExecutors()) {
-                if (StringUtils.isNotEmpty(executor.getName()) && StringUtils.isNotEmpty(executor.getTableName())) {
-                    InstantJobExecutor instantJobExecutor = new InstantJobExecutor(executor.getName(), executor.getTableName(), executor.getMaxThreads(), executor.getQueueSize(), executor.getDataRetention(), executor.getPollingFrequency());
+                if (StringUtils.isNotEmpty(executor.getName())) {
+                    InstantJobExecutor instantJobExecutor = new InstantJobExecutor(executor.getName(), executor.getMaxThreads(), executor.getQueueSize(), executor.getDataRetention(), executor.getPollingFrequency());
                     EXECUTORS.put(executor.getName(), instantJobExecutor);
                 }
             }

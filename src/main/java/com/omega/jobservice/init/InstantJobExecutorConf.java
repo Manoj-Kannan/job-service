@@ -24,7 +24,6 @@ public class InstantJobExecutorConf {
         }
 
         private String name;
-        private String tableName;
         private int queueSize = -1;
         private int maxThreads = -1;
         private int dataRetention = -1;
@@ -33,12 +32,6 @@ public class InstantJobExecutorConf {
         @XmlAttribute(name = "name")
         public String getName() {
             return name;
-        }
-
-
-        @XmlAttribute(name = "tableName")
-        public String getTableName() {
-            return tableName;
         }
 
         @XmlAttribute(name = "queueSize")
@@ -65,7 +58,6 @@ public class InstantJobExecutorConf {
         public String toString() {
             return new StringBuilder("ExecutorConf{")
                     .append("name=").append(name)
-                    .append(", tableName=").append(tableName)
                     .append(", queueSize=").append(queueSize)
                     .append(", maxThreads=").append(maxThreads)
                     .append(", dataRetention=").append(dataRetention)
