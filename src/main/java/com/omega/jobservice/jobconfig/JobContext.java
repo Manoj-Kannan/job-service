@@ -55,6 +55,8 @@ public class JobContext {
     @Transient
     private JobStatus statusEnum = JobStatus.CREATED;
 
+    // TODO - Provide Support for adding Conf (like QueueData)
+
     public String getJobKey() {
         return jobId + "|" + userId + "|" + jobName;
     }
