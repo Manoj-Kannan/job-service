@@ -1,5 +1,8 @@
 package com.omega.jobservice.scheduledjob;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.omega.jobservice.jobconfig.service.JobsService;
 import com.omega.jobservice.init.ScheduledJobConf;
 import com.omega.jobservice.jobconfig.JobTimeOutContext;
 import com.omega.jobservice.jobconfig.JobContext;
@@ -18,6 +21,9 @@ public class ScheduledJobExecutor implements Runnable {
     private static final int MAX_RETRY = 5;
     private static final int JOB_TIMEOUT_BUFFER = 0;
     private static final Logger LOGGER = LogManager.getLogger(ScheduledJobExecutor.class.getName());
+
+    @Autowired
+    private JobsService jobService;
 
     private String name = null;
     private int bufferPeriod;
@@ -53,8 +59,14 @@ public class ScheduledJobExecutor implements Runnable {
             long startTime = System.currentTimeMillis() / 1000;
             long endTime = startTime + bufferPeriod;
 
-            // TODO - get jobs between start & end time
-            // TODO - get incomplete jobs
+            List<JobContext> jobs = jobService.getJobs(name, startTime, endTime, getMaxRetry());
+            List<JobContext> inCompletedJobs = jobService.getInCompletedJobs(name, startTime, endTime, getMaxRetry());
+
+            jobs = CollectionUtils.isEmpty(jobs) ? new ArrayList<>() : jobs;
+            if (CollectionUtils.isNotEmpty(inCompletedJobs)) {
+                jobs.addAll(inCompletedJobs);
+            }
+
             List<JobContext> jobContextList = new ArrayList<>();
             jobContextList.add(new JobContext());
             jobContextList.add(new JobContext());
@@ -72,7 +84,7 @@ public class ScheduledJobExecutor implements Runnable {
             LOGGER.error("Exception occurred ", e);
             ScheduledJobController.getConfig().emailException("Executor : ", this.name + " is Down", e);
         } finally {
-
+            currentThread.setName(threadName);
         }
     }
 
