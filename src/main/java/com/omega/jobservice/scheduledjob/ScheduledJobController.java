@@ -9,6 +9,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import lombok.Getter;
 
+import org.eclipse.persistence.jaxb.JAXBContextFactory;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.JAXBContext;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class ScheduledJobController {
         ClassLoader classLoader = ScheduledJobController.class.getClassLoader();
         File schedulerXml = new File(classLoader.getResource(config.getJobFilePath()).getFile());
 
-        JAXBContext jaxbContext = JAXBContext.newInstance(ScheduledJobConf.class);
+        JAXBContext jaxbContext = JAXBContextFactory.createContext(new Class[]{ScheduledJobConf.class}, null);
         ScheduledJobConf schedulerConf = (ScheduledJobConf) jaxbContext.createUnmarshaller().unmarshal(schedulerXml);
 
         if (schedulerConf.getJobs() != null) {
@@ -60,7 +61,7 @@ public class ScheduledJobController {
         ClassLoader classLoader = ScheduledJobController.class.getClassLoader();
         File executorsXml = new File(classLoader.getResource(config.getExecFilePath()).getFile());
 
-        JAXBContext jaxbContext = JAXBContext.newInstance(ScheduledJobExecutorConf.class);
+        JAXBContext jaxbContext = JAXBContextFactory.createContext(new Class[]{ScheduledJobExecutorConf.class}, null);
         ScheduledJobExecutorConf executorsConf = (ScheduledJobExecutorConf) jaxbContext.createUnmarshaller().unmarshal(executorsXml);
 
         if (executorsConf.getExecutors() != null) {

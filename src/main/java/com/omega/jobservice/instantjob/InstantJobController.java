@@ -11,6 +11,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import lombok.Getter;
 
+import org.eclipse.persistence.jaxb.JAXBContextFactory;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.util.HashMap;
@@ -41,7 +42,7 @@ public class InstantJobController {
         ClassLoader classLoader = InstantJobController.class.getClassLoader();
         File instantJobXml = new File(classLoader.getResource(config.getJobFilePath()).getFile());
 
-        JAXBContext jaxbContext = JAXBContext.newInstance(InstantJobConf.class);
+        JAXBContext jaxbContext = JAXBContextFactory.createContext(new Class[]{InstantJobConf.class}, null);
         InstantJobConf instantJobConf = (InstantJobConf) jaxbContext.createUnmarshaller().unmarshal(instantJobXml);
 
         if (instantJobConf.getJobs() != null) {
@@ -60,7 +61,7 @@ public class InstantJobController {
         ClassLoader classLoader = InstantJobController.class.getClassLoader();
         File executorsXml = new File(classLoader.getResource(config.getExecFilePath()).getFile());
 
-        JAXBContext jaxbContext = JAXBContext.newInstance(InstantJobExecutorConf.class);
+        JAXBContext jaxbContext = JAXBContextFactory.createContext(new Class[]{InstantJobExecutorConf.class}, null);
         InstantJobExecutorConf executorsConf = (InstantJobExecutorConf) jaxbContext.createUnmarshaller().unmarshal(executorsXml);
 
         if (executorsConf.getExecutors() != null) {

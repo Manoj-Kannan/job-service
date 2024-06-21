@@ -32,16 +32,17 @@ public class InstantJobExecutor implements Runnable {
     private final ConcurrentMap<String, JobTimeOutContext> jobMonitorMap = new ConcurrentHashMap<>();
 
     public InstantJobExecutor(String name, int maxThreads, int queueSize, int dataRetention, int pollingFrequency) {
+        queueSize = queueSize > 0 ? queueSize : QUEUE_SIZE;
         this.name = name;
         this.dataRetention = dataRetention;
         this.pollingFrequency = pollingFrequency;
         this.instantJobsQueueService = new InstantJobsQueueService();
+        this.maxThreads = maxThreads > 0 ? maxThreads : JobConstants.DEFAULT_MAX_THREADS;
         this.threadPoolExecutor = new ThreadPoolExecutor(this.maxThreads, //core pool size
                 this.maxThreads, //max pool size
                 KEEP_ALIVE,
                 TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(queueSize > 0 ? queueSize : QUEUE_SIZE));
-        this.maxThreads = maxThreads > 0 ? maxThreads : JobConstants.DEFAULT_MAX_THREADS;
+                new LinkedBlockingQueue<>(queueSize));
     }
 
     @Override
