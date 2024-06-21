@@ -4,6 +4,8 @@ import com.omega.jobservice.init.InstantJobExecutorConf;
 import com.omega.jobservice.init.InstantJobConf;
 import com.omega.jobservice.jobconfig.JobConfig;
 import com.omega.jobservice.util.FileUtils;
+import com.omega.jobservice.util.JobConstants;
+import org.apache.commons.chain.Context;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -36,7 +38,9 @@ public class InstantJobController {
     }
 
     private static void parseJobConfObject() throws JAXBException {
-        File instantJobXml = FileUtils.getConfFile(config.getJobFilePath());
+        ClassLoader classLoader = InstantJobController.class.getClassLoader();
+        File instantJobXml = new File(classLoader.getResource(config.getJobFilePath()).getFile());
+
         JAXBContext jaxbContext = JAXBContext.newInstance(InstantJobConf.class);
         InstantJobConf instantJobConf = (InstantJobConf) jaxbContext.createUnmarshaller().unmarshal(instantJobXml);
 
@@ -53,7 +57,9 @@ public class InstantJobController {
     }
 
     private static void parseExecutorConfObject() throws JAXBException {
-        File executorsXml = FileUtils.getConfFile(config.getExecFilePath());
+        ClassLoader classLoader = InstantJobController.class.getClassLoader();
+        File executorsXml = new File(classLoader.getResource(config.getExecFilePath()).getFile());
+
         JAXBContext jaxbContext = JAXBContext.newInstance(InstantJobExecutorConf.class);
         InstantJobExecutorConf executorsConf = (InstantJobExecutorConf) jaxbContext.createUnmarshaller().unmarshal(executorsXml);
 
@@ -87,5 +93,27 @@ public class InstantJobController {
 
     public static InstantJobConf.JobConf getInstantJob(String jobName) {
         return JOBS_MAP.get(jobName);
+    }
+
+    public static void addInstantJob(String executorName, String jobName, Context context) throws Exception {
+        if (StringUtils.isEmpty(executorName)) {
+            throw new IllegalArgumentException("Executor name cannot be null while adding instant job");
+        }
+
+        InstantJobExecutor jobExec = EXECUTORS.get(executorName);
+        if (jobExec == null) {
+            throw new IllegalArgumentException("No such Instant job executor with name : " + executorName);
+        }
+
+        if (StringUtils.isEmpty(jobName)) {
+            throw new IllegalArgumentException("Job name cannot be null while adding instant job");
+        }
+
+        if (getInstantJob(jobName) == null) {
+            throw new IllegalArgumentException("No such Instant job with name : " + jobName);
+        }
+
+        context.put(JobConstants.INSTANT_JOB, jobName);
+        jobExec.addJob(jobName, context);
     }
 }

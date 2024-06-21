@@ -38,7 +38,9 @@ public class ScheduledJobController {
     }
 
     private static void parseJobConfObject() throws JAXBException {
-        File schedulerXml = FileUtils.getConfFile(config.getJobFilePath());
+        ClassLoader classLoader = ScheduledJobController.class.getClassLoader();
+        File schedulerXml = new File(classLoader.getResource(config.getJobFilePath()).getFile());
+
         JAXBContext jaxbContext = JAXBContext.newInstance(ScheduledJobConf.class);
         ScheduledJobConf schedulerConf = (ScheduledJobConf) jaxbContext.createUnmarshaller().unmarshal(schedulerXml);
 
@@ -56,7 +58,7 @@ public class ScheduledJobController {
 
     private static void parseExecutorConfObject() throws JAXBException {
         ClassLoader classLoader = ScheduledJobController.class.getClassLoader();
-        File executorsXml = FileUtils.getConfFile(config.getExecFilePath());
+        File executorsXml = new File(classLoader.getResource(config.getExecFilePath()).getFile());
 
         JAXBContext jaxbContext = JAXBContext.newInstance(ScheduledJobExecutorConf.class);
         ScheduledJobExecutorConf executorsConf = (ScheduledJobExecutorConf) jaxbContext.createUnmarshaller().unmarshal(executorsXml);
