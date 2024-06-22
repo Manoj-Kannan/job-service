@@ -104,13 +104,13 @@ public class ScheduledJobExecutor implements Runnable {
     }
 
     private void schedule(JobContext dbJobContext, ScheduledJob scheduledJob) {
-        long delay = (dbJobContext.getExecutionTime() - (System.currentTimeMillis() / 1000));
+        long delay = (dbJobContext.getNextExecutionTime() - (System.currentTimeMillis() / 1000));
         Future future = executor.schedule(scheduledJob, delay, TimeUnit.SECONDS);
 
         // Jobs that has execution time in the past, are considered for immediate execution
         if (delay > 0) {
             jobMonitor.put(dbJobContext.getJobKey(),
-                    new JobTimeOutContext(dbJobContext.getExecutionTime() * 1000, (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), future, scheduledJob));
+                    new JobTimeOutContext(dbJobContext.getNextExecutionTime() * 1000, (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), future, scheduledJob));
         } else {
             jobMonitor.put(dbJobContext.getJobKey(),
                     new JobTimeOutContext(System.currentTimeMillis() + 1000, (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), future, scheduledJob));

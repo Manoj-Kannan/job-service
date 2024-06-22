@@ -81,9 +81,9 @@ public abstract class ScheduledJob implements Runnable {
             if (jobContext.getPeriod() != -1) {
                 nextExecutionTime = (Instant.now().getEpochSecond()) + jobContext.getPeriod();
             } else if (jobContext.getScheduleInfo() != null) {
-                nextExecutionTime = jobContext.getScheduleInfo().nextExecutionTime(jobContext.getExecutionTime());
+                nextExecutionTime = jobContext.getScheduleInfo().nextExecutionTime(jobContext.getNextExecutionTime());
 
-                if (nextExecutionTime == jobContext.getExecutionTime()) {
+                if (nextExecutionTime == jobContext.getNextExecutionTime()) {
                     // One time job
                     return -1;
                 }

@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
-import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -18,6 +17,9 @@ public class JobsService {
     JobsDAO jobsDao;
 
     public long addJob(JobContext jobContext) throws Exception {
+        // Set default params
+        jobContext.setCreatedTime(System.currentTimeMillis());
+
         validateJobContext(jobContext);
         jobContext = jobsDao.save(jobContext);
 
@@ -41,7 +43,7 @@ public class JobsService {
             throw new IllegalArgumentException("Job Executor Name cannot be null. Job : " + jobContext.getJobName());
         }
 
-        if (jobContext.getExecutionTime() == -1) {
+        if (jobContext.getNextExecutionTime() == -1) {
             throw new IllegalArgumentException("Invalid execution time for Job : " + jobContext.getJobName());
         }
 
