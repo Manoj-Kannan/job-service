@@ -4,12 +4,16 @@ import com.omega.jobservice.init.ScheduledJobConf;
 import com.omega.jobservice.jobconfig.JobConfig;
 import com.omega.jobservice.init.ScheduledJobExecutorConf;
 import org.apache.commons.lang3.StringUtils;
-import com.omega.jobservice.util.FileUtils;
+import com.omega.jobservice.BeanFactory;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import lombok.Getter;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.eclipse.persistence.jaxb.JAXBContextFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.JAXBContext;
 import java.util.ArrayList;
@@ -18,15 +22,21 @@ import java.util.List;
 import java.util.Map;
 import java.io.File;
 
+@Component
 public class ScheduledJobController {
     private static final Logger LOGGER = LogManager.getLogger(ScheduledJobController.class.getName());
 
     private static final Map<String, ScheduledJobConf.JobConf> JOBS_MAP = new HashMap<>();
     private static final List<ScheduledJobExecutor> EXECUTORS = new ArrayList<>();
+
     @Getter
+    @Autowired
     private static JobConfig config = null;
 
-    public static synchronized void initScheduler(JobConfig jobConfig) throws JAXBException {
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    public synchronized void initScheduler(JobConfig jobConfig) throws JAXBException {
         config = jobConfig;
 
         parseJobConfObject();
@@ -38,7 +48,7 @@ public class ScheduledJobController {
         LOGGER.info("Scheduler Executors : " + EXECUTORS);
     }
 
-    private static void parseJobConfObject() throws JAXBException {
+    private void parseJobConfObject() throws JAXBException {
         ClassLoader classLoader = ScheduledJobController.class.getClassLoader();
         File schedulerXml = new File(classLoader.getResource(config.getJobFilePath()).getFile());
 
@@ -57,7 +67,7 @@ public class ScheduledJobController {
         }
     }
 
-    private static void parseExecutorConfObject() throws JAXBException {
+    private void parseExecutorConfObject() throws JAXBException {
         ClassLoader classLoader = ScheduledJobController.class.getClassLoader();
         File executorsXml = new File(classLoader.getResource(config.getExecFilePath()).getFile());
 
@@ -67,11 +77,11 @@ public class ScheduledJobController {
         if (executorsConf.getExecutors() != null) {
             for (ScheduledJobExecutorConf.Executor executor : executorsConf.getExecutors()) {
                 if (StringUtils.isNotEmpty(executor.getName()) && executor.getPeriod() != -1 && executor.getThreads() != -1) {
-                    if (executor.getMaxRetry() > 0) {
-                        EXECUTORS.add(new ScheduledJobExecutor(executor.getName(), executor.getThreads(), executor.getPeriod(), executor.getMaxRetry()));
-                    } else {
-                        EXECUTORS.add(new ScheduledJobExecutor(executor.getName(), executor.getThreads(), executor.getPeriod()));
-                    }
+                    int maxRetry = executor.getMaxRetry() > 0 ? executor.getMaxRetry() : 0;
+                    BeanFactory beanFactory = applicationContext.getBean(BeanFactory.class);
+                    ScheduledJobExecutor scheduledJobExecutor = beanFactory.createScheduledExecutor(executor.getName(), executor.getThreads(), executor.getPeriod(), maxRetry);
+
+                    EXECUTORS.add(scheduledJobExecutor);
                 }
             }
         }

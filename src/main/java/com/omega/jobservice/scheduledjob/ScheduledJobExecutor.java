@@ -22,7 +22,7 @@ public class ScheduledJobExecutor implements Runnable {
     private static final int JOB_TIMEOUT_BUFFER = 0;
     private static final Logger LOGGER = LogManager.getLogger(ScheduledJobExecutor.class.getName());
 
-    @Autowired
+    // managing the instantiation and dependency injection dynamically (explicit control over how instances are created and injected)
     private JobsService jobService;
 
     private String name = null;
@@ -31,12 +31,9 @@ public class ScheduledJobExecutor implements Runnable {
     private ScheduledExecutorService executor = null;
     private final ConcurrentMap<String, JobTimeOutContext> jobMonitor = new ConcurrentHashMap<>();
 
-    public ScheduledJobExecutor(String name, int noOfThreads, int bufferPeriod) {
-        this(name, noOfThreads, bufferPeriod, 0);
-    }
-
-    public ScheduledJobExecutor(String name, int noOfThreads, int bufferPeriod, int maxRetry) {
+    public ScheduledJobExecutor(String name, int noOfThreads, int bufferPeriod, int maxRetry, JobsService jobService) {
         this.name = name;
+        this.jobService = jobService;
         this.bufferPeriod = bufferPeriod;
         if (maxRetry > 0) {
             this.maxRetry = maxRetry;
@@ -44,6 +41,11 @@ public class ScheduledJobExecutor implements Runnable {
 
         executor = Executors.newScheduledThreadPool(noOfThreads + 1);
         executor.scheduleAtFixedRate(this, 0, bufferPeriod * 1000L, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public String toString() {
+        return "ScheduledJobExecutor{name, bufferPeriod, maxRetry}={" + name + "," + bufferPeriod + "," + maxRetry + "}";
     }
 
     @Override

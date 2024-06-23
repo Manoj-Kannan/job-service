@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.omega.jobservice.jobconfig.service.JobsService;
 import com.omega.jobservice.commands.ChainFactory;
 import com.omega.jobservice.jobconfig.JobContext;
+import org.springframework.stereotype.Component;
 import com.omega.jobservice.util.JobConstants;
 import org.apache.commons.chain.impl.ContextBase;
 import org.apache.commons.chain.impl.ChainBase;
@@ -18,15 +19,19 @@ import java.time.Instant;
 
 @Getter
 @Setter
+@Component
 public abstract class ScheduledJob implements Runnable {
     private static final Logger LOGGER = LogManager.getLogger(ScheduledJob.class.getName());
 
     private JobContext jobContext = null;
-    private ScheduledJobExecutor executor = null;
+    private ScheduledJobExecutor executor;
     private int retryExecutionCount = 1;
 
     @Autowired
     private JobsService jobService;
+
+    @Autowired
+    private ScheduledJobController scheduledJobController;
 
     public abstract void execute(JobContext jobContext) throws Exception;
 
@@ -66,7 +71,7 @@ public abstract class ScheduledJob implements Runnable {
             // TODO - Reschedule
         } finally {
             long timeTaken = (System.currentTimeMillis() - startTime);
-            ScheduledJobController.getConfig().log(jobContext, timeTaken, jobStatus);
+            scheduledJobController.getConfig().log(jobContext, timeTaken, jobStatus);
 
             if (jobStatus.equals(JobContext.JobStatus.COMPLETED)) {
                 updateNextExecutionTime();
@@ -119,7 +124,7 @@ public abstract class ScheduledJob implements Runnable {
         } else {
             jobService.setInActive(jobContext.getUserId(), jobContext.getJobId(), jobContext.getJobName());
             LOGGER.error("Max retry exceeded for : " + jobContext + ".\nSo making it inactive");
-            ScheduledJobController.getConfig().emailException("ScheduledJobContext", "Max retry exceeded for Job : " + jobContext.getJobId() + " : " + jobContext.getJobName(), "\nSince max retries exceeded for job : " + jobContext.getJobId() + "-" + jobContext.getJobName() + ", making it inactive.");
+            scheduledJobController.getConfig().emailException("ScheduledJobContext", "Max retry exceeded for Job : " + jobContext.getJobId() + " : " + jobContext.getJobName(), "\nSince max retries exceeded for job : " + jobContext.getJobId() + "-" + jobContext.getJobName() + ", making it inactive.");
         }
     }
 
