@@ -44,7 +44,7 @@ public class JobContext {
     private Long nextExecutionTime = -1L;       // on job creation, set expected job start time
     private Long jobStartTime = 0L;             // on job pick, execution start time
     private Long endExecutionTime = -1L;        // maximum start time that a job can be scheduled for nextExecution
-    private Long transactionTimeout = -1L;      // maximum job alive time
+    private Integer transactionTimeout = 0;     // maximum job alive time
 
     // Period - Custom Scheduling (mention nextExecution startTime in Seconds) eg. Jobs that run every 30 min
     private Boolean isPeriodic;

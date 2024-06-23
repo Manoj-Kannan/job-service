@@ -1,5 +1,6 @@
 package com.omega.jobservice.jobconfig.service;
 
+import com.omega.jobservice.init.ScheduledJobConf;
 import com.omega.jobservice.jobconfig.JobContext;
 import com.omega.jobservice.jobconfig.dao.JobsDAO;
 import com.omega.jobservice.scheduledjob.ScheduledJobController;
@@ -17,10 +18,28 @@ public class JobsService {
     JobsDAO jobsDao;
 
     public long addJob(JobContext jobContext) throws Exception {
-        // Set default params
-        jobContext.setCreatedTime(System.currentTimeMillis());
+        /*
+        Expected Params:
+        jobName & executorName (as per JobConf declared)
+        jobId (any context id), userId, nextExecutionTime (expected job start time)
+        maxExecutionCount (max retry count), endExecutionTime (maximum start time)
+        isPeriodic - should contain period (in min) or scheduleInfo
+
+        Default Params:
+        isActive = true (job is alive)
+        status = JobStatus.CREATED (created state)
+        createdTime = System.currentTimeMillis()
+
+        Optional:
+        transactionTimeout (as per JobConf declared)
+        loggerLevel (based on need)
+
+        Decide:
+        jobServerId, timezone
+         */
 
         validateJobContext(jobContext);
+        setJobDefaultParams(jobContext);
         jobContext = jobsDao.save(jobContext);
 
         return jobContext.getJobId();
@@ -49,6 +68,16 @@ public class JobsService {
 
         if (jobContext.isPeriodic() && jobContext.getPeriod() == -1 && jobContext.getScheduleInfo() == null) {
             throw new IllegalArgumentException("Either period or schedule info should be specified for recurring job : " + jobContext);
+        }
+    }
+
+    private void setJobDefaultParams(JobContext jobContext) {
+        jobContext.setIsActive(true);
+        jobContext.setCreatedTime(System.currentTimeMillis());
+
+        if (jobContext.getTransactionTimeout() <= 0) {
+            ScheduledJobConf.JobConf jobConf = ScheduledJobController.getScheduledJobConf(jobContext.getJobName());
+            jobContext.setTransactionTimeout(jobConf.getTransactionTimeout());
         }
     }
 
