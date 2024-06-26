@@ -20,52 +20,73 @@ public interface JobsDAO extends JpaRepository<JobContext, JobContextPrimaryKey>
 
     @Modifying
     @Transactional
-    @Query("UPDATE JobContext j SET j.jobStartTime = :jobStartTime, j.currentExecutionCount = :jobExecutionCount " +
-            "WHERE j.userId = :userId AND j.jobId = :jobId AND j.jobName = :jobName")
+    @Query("UPDATE JobContext j SET j.status = :status, j.jobStartTime = :jobStartTime, " +
+            "j.serverId = :serverId, j.executionErrorCount = :updatedExecutionErrorCount " +
+            "WHERE j.userId = :userId AND j.jobId = :jobId AND j.jobName = :jobName AND j.executionErrorCount = :executionErrorCount")
     int updateStartExecution(@Param("userId") long userId,
                              @Param("jobId") long jobId,
                              @Param("jobName") String jobName,
+                             @Param("status") int status,
                              @Param("jobStartTime") long jobStartTime,
-                             @Param("jobExecutionCount") int jobExecutionCount);
+                             @Param("serverId") long serverId,
+                             @Param("executionErrorCount") int executionErrorCount,
+                             @Param("updatedExecutionErrorCount") int updatedExecutionErrorCount);
 
     @Modifying
     @Transactional
-    @Query("UPDATE JobContext j SET j.nextExecutionTime = :nextExecutionTime, j.currentExecutionCount = :executionCount " +
+    @Query("UPDATE JobContext j SET j.status = :status, j.nextExecutionTime = :nextExecutionTime, " +
+            "j.currentExecutionCount = :executionCount, j.executionErrorCount = :executionErrorCount " +
             "WHERE j.userId = :userId AND j.jobId = :jobId AND j.jobName = :jobName")
     int updateNextExecutionTimeAndCount(@Param("userId") long userId,
                                         @Param("jobId") long jobId,
                                         @Param("jobName") String jobName,
+                                        @Param("status") int status,
                                         @Param("nextExecutionTime") long nextExecutionTime,
-                                        @Param("executionCount") int executionCount);
+                                        @Param("executionCount") int executionCount,
+                                        @Param("executionErrorCount") int executionErrorCount);
 
     @Modifying
     @Transactional
-    @Query("UPDATE JobContext j SET j.isActive = false " +
+    @Query("UPDATE JobContext j SET j.isActive = false, j.status = :status, " +
+            "j.serverId = :serverId, j.executionErrorCount = :executionErrorCount " +
             "WHERE j.userId = :userId AND j.jobId = :jobId AND j.jobName = :jobName")
     int setInActive(@Param("userId") long userId,
                     @Param("jobId") long jobId,
-                    @Param("jobName") String jobName);
+                    @Param("jobName") String jobName,
+                    @Param("status") int status,
+                    @Param("serverId") long serverId,
+                    @Param("executionErrorCount") int executionErrorCount);
 
     @Modifying
     @Transactional
-    @Query("UPDATE JobContext j SET j.isActive = false, j.currentExecutionCount = :executionCount " +
+    @Query("UPDATE JobContext j SET j.isActive = false, j.status = :status, " +
+            "j.serverId = :serverId, j.currentExecutionCount = :executionCount, j.executionErrorCount = :executionErrorCount " +
             "WHERE j.userId = :userId AND j.jobId = :jobId AND j.jobName = :jobName")
     int setInActiveAndUpdateCount(@Param("userId") long userId,
                                   @Param("jobId") long jobId,
                                   @Param("jobName") String jobName,
-                                  @Param("executionCount") int executionCount);
+                                  @Param("status") int status,
+                                  @Param("serverId") long serverId,
+                                  @Param("executionCount") int executionCount,
+                                  @Param("executionErrorCount") int executionErrorCount);
 
-    @Query("SELECT j FROM JobContext j WHERE j.executorName = :executorName AND j.jobStartTime >= :startTime AND j.jobStartTime <= :endTime AND j.currentExecutionCount <= :maxRetry")
+    JobContext findByUserIdAndJobIdAndJobName(long userId, long jobId, String jobName);
+
+    @Query("SELECT j FROM JobContext j WHERE j.executorName = :executorName AND j.isActive = true AND j.status = :status " +
+            "AND j.nextExecutionTime < :endTime AND j.currentExecutionCount < :maxRetry")
     List<JobContext> getJobs(@Param("executorName") String executorName,
-                             @Param("startTime") long startTime,
+                             @Param("status") int status,
                              @Param("endTime") long endTime,
                              @Param("maxRetry") int maxRetry);
 
-    @Query("SELECT j FROM JobContext j WHERE j.executorName = :executorName AND j.jobStartTime >= :startTime AND j.jobStartTime <= :endTime AND j.currentExecutionCount <= :maxRetry AND j.status != 3")
+    @Query("SELECT j FROM JobContext j WHERE j.executorName = :executorName AND j.isActive = true AND j.status = :status " +
+            "AND j.nextExecutionTime < :endTime AND j.executionErrorCount < :maxRetry " +
+            "AND (j.jobStartTime + j.transactionTimeout) < :currentTime")
     List<JobContext> getInCompletedJobs(@Param("executorName") String executorName,
-                                        @Param("startTime") long startTime,
+                                        @Param("status") int status,
                                         @Param("endTime") long endTime,
-                                        @Param("maxRetry") int maxRetry);
+                                        @Param("maxRetry") int maxRetry,
+                                        @Param("currentTime") long currentTime);
 
     @Modifying
     @Transactional

@@ -1,7 +1,6 @@
 package com.omega.jobservice.scheduledjob;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.omega.jobservice.jobconfig.service.JobsService;
 import com.omega.jobservice.init.ScheduledJobConf;
 import com.omega.jobservice.jobconfig.JobTimeOutContext;
@@ -61,8 +60,8 @@ public class ScheduledJobExecutor implements Runnable {
             long startTime = System.currentTimeMillis() / 1000;
             long endTime = startTime + bufferPeriod;
 
-            List<JobContext> jobs = jobService.getJobs(name, startTime, endTime, getMaxRetry());
-            List<JobContext> inCompletedJobs = jobService.getInCompletedJobs(name, startTime, endTime, getMaxRetry());
+            List<JobContext> jobs = jobService.getJobs(name, endTime, getMaxRetry());
+            List<JobContext> inCompletedJobs = jobService.getInCompletedJobs(name, endTime, getMaxRetry());
 
             jobs = CollectionUtils.isEmpty(jobs) ? new ArrayList<>() : jobs;
             if (CollectionUtils.isNotEmpty(inCompletedJobs)) {

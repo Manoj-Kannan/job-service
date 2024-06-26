@@ -1,6 +1,8 @@
 package com.omega.jobservice.jobconfig;
 
 public interface JobConfig {
+    long getServerId();
+
     String getJobFilePath();
 
     String getExecFilePath();

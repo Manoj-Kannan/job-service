@@ -37,7 +37,7 @@ public class JobContext {
         return status;
     }
 
-    private Long jobServerId = 0L;
+    private Long serverId = 0L;
     private String executorName;
     private String timezone;
     private Long createdTime = -1L;             // job added time
@@ -56,7 +56,7 @@ public class JobContext {
 
     private Integer maxExecutionCount = -1;         // maximum number of times, a job can be executed
     private Integer currentExecutionCount = 0;      // current iteration count
-    private Integer jobExecutionErrorCount = 0;     // error occurred count
+    private Integer executionErrorCount = 0;        // error occurred count
     private ScheduleInfo scheduleInfo;
     private Integer loggerLevel = -1;
 

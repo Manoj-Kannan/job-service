@@ -82,35 +82,54 @@ public class JobsService {
     }
 
     @Transactional
-    public int updateStartExecution(long userId, long jobId, String jobName, long jobStartTime, int jobExecutionCount) {
-        return jobsDao.updateStartExecution(userId, jobId, jobName, jobStartTime, jobExecutionCount);
+    public int updateStartExecution(long userId, long jobId, String jobName, long jobStartTime, int executionErrorCount) {
+        int updatedExecutionErrorCount = executionErrorCount + 1;
+        int status = JobContext.JobStatus.IN_PROGRESS.getIndex();
+        long serverId = ScheduledJobController.getConfig().getServerId();
+
+        return jobsDao.updateStartExecution(userId, jobId, jobName, status, jobStartTime, serverId, executionErrorCount, updatedExecutionErrorCount);
     }
 
     @Transactional
     public int updateNextExecutionTimeAndCount(long userId, long jobId, String jobName, long nextExecutionTime, int executionCount) throws SQLException {
-        int updatedRows = jobsDao.updateNextExecutionTimeAndCount(userId, jobId, jobName, nextExecutionTime, executionCount);
-        if (updatedRows == 0) {
-            throw new SQLException("No rows updated. Job not found or data unchanged.");
-        }
-        return updatedRows;
+        int executionErrorCount = 0;
+        int status = JobContext.JobStatus.CREATED.getIndex();
+
+        return jobsDao.updateNextExecutionTimeAndCount(userId, jobId, jobName, status, nextExecutionTime, executionCount, executionErrorCount);
     }
 
     @Transactional
     public int setInActive(long userId, long jobId, String jobName) throws SQLException {
-        return jobsDao.setInActive(userId, jobId, jobName);
+        int executionErrorCount = 0;
+        int status = JobContext.JobStatus.COMPLETED.getIndex();
+        long serverId = ScheduledJobController.getConfig().getServerId();
+
+        return jobsDao.setInActive(userId, jobId, jobName, status, serverId, executionErrorCount);
     }
 
     @Transactional
     public int setInActiveAndUpdateCount(long userId, long jobId, String jobName, int executionCount) throws SQLException {
-        return jobsDao.setInActiveAndUpdateCount(userId, jobId, jobName, executionCount);
+        int executionErrorCount = 0;
+        int status = JobContext.JobStatus.COMPLETED.getIndex();
+        long serverId = ScheduledJobController.getConfig().getServerId();
+
+        return jobsDao.setInActiveAndUpdateCount(userId, jobId, jobName, status, serverId, executionCount, executionErrorCount);
     }
 
-    public List<JobContext> getJobs(String executorName, long startTime, long endTime, int maxRetry) throws Exception {
-        return jobsDao.getJobs(executorName, startTime, endTime, maxRetry);
+    public JobContext getJob(long userId, long jobId, String jobName) throws Exception {
+        return jobsDao.findByUserIdAndJobIdAndJobName(userId, jobId, jobName);
     }
 
-    public List<JobContext> getInCompletedJobs(String executorName, long startTime, long endTime, int maxRetry) throws Exception {
-        return jobsDao.getInCompletedJobs(executorName, startTime, endTime, maxRetry);
+    public List<JobContext> getJobs(String executorName, long endTime, int maxRetry) throws Exception {
+        int status = JobContext.JobStatus.CREATED.getIndex();
+
+        return jobsDao.getJobs(executorName, status, endTime, maxRetry);
+    }
+
+    public List<JobContext> getInCompletedJobs(String executorName, long endTime, int maxRetry) throws Exception {
+        int status = JobContext.JobStatus.IN_PROGRESS.getIndex();
+
+        return jobsDao.getInCompletedJobs(executorName, status, endTime, maxRetry, System.currentTimeMillis());
     }
 
     @Transactional

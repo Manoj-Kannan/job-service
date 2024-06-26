@@ -59,21 +59,27 @@ public class ScheduledJobsAction {
         return ResponseEntity.ok(updatedRows);
     }
 
+    @PutMapping("/getJob")
+    public ResponseEntity<JobContext> getJob(@RequestParam long userId,
+                                             @RequestParam long jobId,
+                                             @RequestParam String jobName) throws Exception {
+        JobContext jobContext = jobService.getJob(userId, jobId, jobName);
+        return ResponseEntity.ok(jobContext);
+    }
+
     @GetMapping("/getJobs")
     public ResponseEntity<List<JobContext>> getJobs(@RequestParam String executorName,
-                                                    @RequestParam long startTime,
                                                     @RequestParam long endTime,
                                                     @RequestParam int maxRetry) throws Exception {
-        List<JobContext> jobs = jobService.getJobs(executorName, startTime, endTime, maxRetry);
+        List<JobContext> jobs = jobService.getJobs(executorName, endTime, maxRetry);
         return ResponseEntity.ok(jobs);
     }
 
     @GetMapping("/getInCompletedJobs")
     public ResponseEntity<List<JobContext>> getInCompletedJobs(@RequestParam String executorName,
-                                                               @RequestParam long startTime,
                                                                @RequestParam long endTime,
                                                                @RequestParam int maxRetry) throws Exception {
-        List<JobContext> jobs = jobService.getInCompletedJobs(executorName, startTime, endTime, maxRetry);
+        List<JobContext> jobs = jobService.getInCompletedJobs(executorName, endTime, maxRetry);
         return ResponseEntity.ok(jobs);
     }
 

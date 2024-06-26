@@ -37,7 +37,7 @@ public abstract class ScheduledJob implements Runnable {
 
     @Override
     public void run() {
-        jobService.updateStartExecution(jobContext.getUserId(), jobContext.getJobId(), jobContext.getJobName(), jobContext.getJobStartTime(), jobContext.getJobExecutionErrorCount());
+        jobService.updateStartExecution(jobContext.getUserId(), jobContext.getJobId(), jobContext.getJobName(), jobContext.getJobStartTime(), jobContext.getExecutionErrorCount());
 
         Thread currentThread = Thread.currentThread();
         String threadName = currentThread.getName();
