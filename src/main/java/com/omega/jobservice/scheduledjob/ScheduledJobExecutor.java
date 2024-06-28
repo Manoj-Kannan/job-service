@@ -1,5 +1,6 @@
 package com.omega.jobservice.scheduledjob;
 
+import com.omega.jobservice.util.TimeUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import com.omega.jobservice.jobconfig.service.JobsService;
 import org.springframework.context.ApplicationContext;
@@ -41,7 +42,7 @@ public class ScheduledJobExecutor implements Runnable {
         }
         this.applicationContext = applicationContext;
         executor = Executors.newScheduledThreadPool(noOfThreads + 1);
-        executor.scheduleAtFixedRate(this, 0, bufferPeriod * 1000L, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this, 0, bufferPeriod * TimeUtil.ONE_SECOND, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -59,7 +60,7 @@ public class ScheduledJobExecutor implements Runnable {
             // TODO - clean current user & set account
             handleTimeOut();
 
-            long startTime = System.currentTimeMillis() / 1000;
+            long startTime = TimeUtil.currentTimeInSeconds();
             long endTime = startTime + bufferPeriod;
 
             List<JobContext> jobs = jobService.getJobs(name, endTime, getMaxRetry());
@@ -105,16 +106,16 @@ public class ScheduledJobExecutor implements Runnable {
     }
 
     private void schedule(JobContext dbJobContext, ScheduledJob scheduledJob) {
-        long delay = (dbJobContext.getNextExecutionTime() - (System.currentTimeMillis() / 1000));
+        long delay = (dbJobContext.getNextExecutionTime() - TimeUtil.currentTimeInSeconds());
         Future future = executor.schedule(scheduledJob, delay, TimeUnit.SECONDS);
 
         // Jobs that has execution time in the past, are considered for immediate execution
         if (delay > 0) {
             jobMonitor.put(dbJobContext.getJobKey(),
-                    new JobTimeOutContext(dbJobContext.getNextExecutionTime() * 1000, (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), future, scheduledJob));
+                    new JobTimeOutContext(TimeUtil.timeInMilliSeconds(dbJobContext.getNextExecutionTime()), (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), future, scheduledJob));
         } else {
             jobMonitor.put(dbJobContext.getJobKey(),
-                    new JobTimeOutContext(System.currentTimeMillis() + 1000, (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), future, scheduledJob));
+                    new JobTimeOutContext(addOneSecondToCurrentTime(), (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), future, scheduledJob));
         }
     }
 
@@ -122,7 +123,7 @@ public class ScheduledJobExecutor implements Runnable {
         endJob(dbJobContext.getJobKey());
         Future f = executor.schedule(scheduledJob, 1, TimeUnit.SECONDS);
         jobMonitor.put(dbJobContext.getJobKey(),
-                new JobTimeOutContext(System.currentTimeMillis() + 1000, (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), f, scheduledJob));
+                new JobTimeOutContext(addOneSecondToCurrentTime(), (dbJobContext.getTransactionTimeout() + JOB_TIMEOUT_BUFFER), f, scheduledJob));
     }
 
     public void endJob(String jobKey) {
@@ -135,7 +136,7 @@ public class ScheduledJobExecutor implements Runnable {
     }
 
     private void handleTimeOut() {
-        long currentTime = System.currentTimeMillis();
+        long currentTime = TimeUtil.currentTimeInMillis();
         Iterator<Map.Entry<String, JobTimeOutContext>> itr = jobMonitor.entrySet().iterator();
 
         while (itr.hasNext()) {
@@ -149,5 +150,9 @@ public class ScheduledJobExecutor implements Runnable {
                 }
             }
         }
+    }
+
+    private long addOneSecondToCurrentTime() {
+        return TimeUtil.currentTimeInMillis() + TimeUtil.ONE_SECOND;
     }
 }

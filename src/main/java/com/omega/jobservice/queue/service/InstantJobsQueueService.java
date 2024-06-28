@@ -2,6 +2,7 @@ package com.omega.jobservice.queue.service;
 
 import com.omega.jobservice.queue.context.QueueMessage;
 import com.omega.jobservice.queue.dao.InstantJobsQueueDAO;
+import com.omega.jobservice.util.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import com.omega.jobservice.queue.context.InstantJobsQueue;
@@ -94,7 +95,7 @@ public class InstantJobsQueueService {
 
         if (optionalQueue.isPresent()) {
             InstantJobsQueue queue = optionalQueue.get();
-            queue.setDeletedTime(System.currentTimeMillis());
+            queue.setDeletedTime(TimeUtil.currentTimeInSeconds());
             instantJobsQueueDao.save(queue);
         } else {
             throw new IllegalArgumentException("InstantJob not found - Id - : " + messageId);

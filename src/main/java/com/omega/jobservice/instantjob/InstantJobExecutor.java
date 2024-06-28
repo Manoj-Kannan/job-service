@@ -5,6 +5,7 @@ import com.omega.jobservice.jobconfig.JobTimeOutContext;
 import com.omega.jobservice.queue.service.InstantJobsQueueService;
 import com.omega.jobservice.queue.context.QueueMessage;
 import com.omega.jobservice.util.JobConstants;
+import com.omega.jobservice.util.TimeUtil;
 import org.apache.commons.chain.Context;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -89,11 +90,11 @@ public class InstantJobExecutor implements Runnable {
                                     LOGGER.debug("Executing job : " + jobName);
 
                                     Future f = threadPoolExecutor.submit(() -> job._execute(context,
-                                            (instantJob.getTransactionTimeout() - InstantJobConf.JOB_TIMEOUT_BUFFER) * 1000));
+                                            (instantJob.getTransactionTimeout() - InstantJobConf.JOB_TIMEOUT_BUFFER) * TimeUtil.ONE_SECOND));
 
                                     jobMonitorMap.put(receiptHandle, new JobTimeOutContext(
-                                            System.currentTimeMillis(),
-                                            (instantJob.getTransactionTimeout() + InstantJobConf.JOB_TIMEOUT_BUFFER) * 1000L, f,
+                                            TimeUtil.currentTimeInMillis(),
+                                            (instantJob.getTransactionTimeout() + InstantJobConf.JOB_TIMEOUT_BUFFER) * TimeUtil.ONE_SECOND, f,
                                             job));
 
                                 } catch (Exception e) {
@@ -151,7 +152,7 @@ public class InstantJobExecutor implements Runnable {
 
     private void handleTimeOut() {
         Iterator<Map.Entry<String, JobTimeOutContext>> itr = jobMonitorMap.entrySet().iterator();
-        long currentTime = System.currentTimeMillis();
+        long currentTime = TimeUtil.currentTimeInMillis();
         while (itr.hasNext()) {
             JobTimeOutContext info = itr.next().getValue();
             if (currentTime >= (info.getExecutionTime() + info.getTimeOut())) {
@@ -164,7 +165,7 @@ public class InstantJobExecutor implements Runnable {
     }
 
     public void deleteInstantJobQueueTable() throws Exception {
-        long deletionTillDate = (System.currentTimeMillis() - ((long) dataRetention * 24 * 60 * 60 * 1000));
+        long deletionTillDate = (TimeUtil.currentTimeInMillis() - (dataRetention * TimeUtil.ONE_DAY_IN_MILLIS));
 
         try {
             instantJobsQueueService.deleteQueue(deletionTillDate);

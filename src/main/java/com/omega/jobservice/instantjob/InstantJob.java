@@ -3,6 +3,7 @@ package com.omega.jobservice.instantjob;
 import com.omega.jobservice.commands.ChainFactory;
 import com.omega.jobservice.jobconfig.JobContext;
 import com.omega.jobservice.util.JobConstants;
+import com.omega.jobservice.util.TimeUtil;
 import org.apache.commons.chain.Context;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -21,7 +22,7 @@ public abstract class InstantJob {
 
     public abstract void execute(Context context) throws Exception;
 
-    public void _execute(Context context, int transactionTimeout) {
+    public void _execute(Context context, long transactionTimeout) {
         Thread currentThread = Thread.currentThread();
         String threadName = currentThread.getName();
         currentThread.setName(MessageFormat.format("{0}-{1}-instant-job-{2}",
@@ -31,7 +32,7 @@ public abstract class InstantJob {
 
         String jobName = (String) context.remove(JobConstants.INSTANT_JOB_NAME);
 
-        long startTime = System.currentTimeMillis();
+        long startTime = TimeUtil.currentTimeInMillis();
         JobContext.JobStatus jobStatus = JobContext.JobStatus.CREATED;
 
         try {
@@ -50,7 +51,7 @@ public abstract class InstantJob {
             job.setIsPeriodic(false);
             job.setExecutorName("instant");
 
-            InstantJobController.getConfig().log(job, (System.currentTimeMillis() - startTime), jobStatus);
+            InstantJobController.getConfig().log(job, TimeUtil.calculateMilliSecDifference(startTime), jobStatus);
 
             currentThread.setName(threadName);
             executor.endJob(getMessageId());

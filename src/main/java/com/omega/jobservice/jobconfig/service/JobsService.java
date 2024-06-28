@@ -5,6 +5,7 @@ import com.omega.jobservice.jobconfig.JobContext;
 import com.omega.jobservice.jobconfig.dao.JobsDAO;
 import com.omega.jobservice.scheduledjob.ScheduledJobController;
 
+import com.omega.jobservice.util.TimeUtil;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -73,7 +74,7 @@ public class JobsService {
 
     private void setJobDefaultParams(JobContext jobContext) {
         jobContext.setIsActive(true);
-        jobContext.setCreatedTime(System.currentTimeMillis());
+        jobContext.setCreatedTime(TimeUtil.currentTimeInSeconds());
 
         if (jobContext.getTransactionTimeout() <= 0) {
             ScheduledJobConf.JobConf jobConf = ScheduledJobController.getScheduledJobConf(jobContext.getJobName());
@@ -129,7 +130,7 @@ public class JobsService {
     public List<JobContext> getInCompletedJobs(String executorName, long endTime, int maxRetry) throws Exception {
         int status = JobContext.JobStatus.IN_PROGRESS.getIndex();
 
-        return jobsDao.getInCompletedJobs(executorName, status, endTime, maxRetry, System.currentTimeMillis());
+        return jobsDao.getInCompletedJobs(executorName, status, endTime, maxRetry, TimeUtil.currentTimeInSeconds());
     }
 
     @Transactional

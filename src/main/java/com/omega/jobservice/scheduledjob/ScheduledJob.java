@@ -1,6 +1,7 @@
 package com.omega.jobservice.scheduledjob;
 
 import com.omega.jobservice.jobconfig.service.JobsService;
+import com.omega.jobservice.util.TimeUtil;
 import org.springframework.context.ApplicationContext;
 import com.omega.jobservice.commands.ChainFactory;
 import com.omega.jobservice.jobconfig.JobContext;
@@ -14,7 +15,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.SQLException;
-import java.time.Instant;
 
 @Getter
 @Setter
@@ -42,7 +42,7 @@ public abstract class ScheduledJob implements Runnable {
 
         try {
             retryExecutionCount++;
-            startTime = System.currentTimeMillis();
+            startTime = TimeUtil.currentTimeInMillis();
             LOGGER.debug("Starting job " + jobContext.getJobKey());
 
             // TODO - Set Current Account, TimeZone, LoggerLevel
@@ -64,7 +64,7 @@ public abstract class ScheduledJob implements Runnable {
 
             // TODO - Reschedule
         } finally {
-            long timeTaken = (System.currentTimeMillis() - startTime);
+            long timeTaken = TimeUtil.calculateMilliSecDifference(startTime);
             ScheduledJobController.getConfig().log(jobContext, timeTaken, jobStatus);
 
             if (jobStatus.equals(JobContext.JobStatus.COMPLETED)) {
@@ -78,7 +78,7 @@ public abstract class ScheduledJob implements Runnable {
         long nextExecutionTime = -1;
         if (jobContext.isPeriodic() && (jobContext.getMaxExecutionCount() == -1 || (jobContext.getCurrentExecutionCount() + 1 < jobContext.getMaxExecutionCount()))) {
             if (jobContext.getPeriod() != -1) {
-                nextExecutionTime = (Instant.now().getEpochSecond()) + jobContext.getPeriod();
+                nextExecutionTime = (TimeUtil.currentTimeInSeconds()) + jobContext.getPeriod();
             } else if (jobContext.getScheduleInfo() != null) {
                 nextExecutionTime = jobContext.getScheduleInfo().nextExecutionTime(jobContext.getNextExecutionTime());
 
@@ -87,7 +87,7 @@ public abstract class ScheduledJob implements Runnable {
                     return -1;
                 }
 
-                while (nextExecutionTime <= Instant.now().getEpochSecond()) {
+                while (nextExecutionTime <= TimeUtil.currentTimeInSeconds()) {
                     nextExecutionTime = jobContext.getScheduleInfo().nextExecutionTime(nextExecutionTime);
                 }
             }
