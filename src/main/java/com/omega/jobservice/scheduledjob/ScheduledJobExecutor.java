@@ -2,6 +2,7 @@ package com.omega.jobservice.scheduledjob;
 
 import org.apache.commons.collections4.CollectionUtils;
 import com.omega.jobservice.jobconfig.service.JobsService;
+import org.springframework.context.ApplicationContext;
 import com.omega.jobservice.init.ScheduledJobConf;
 import com.omega.jobservice.jobconfig.JobTimeOutContext;
 import com.omega.jobservice.jobconfig.JobContext;
@@ -23,6 +24,7 @@ public class ScheduledJobExecutor implements Runnable {
 
     // managing the instantiation and dependency injection dynamically (explicit control over how instances are created and injected)
     private JobsService jobService;
+    private ApplicationContext applicationContext;
 
     private String name = null;
     private int bufferPeriod;
@@ -30,14 +32,14 @@ public class ScheduledJobExecutor implements Runnable {
     private ScheduledExecutorService executor = null;
     private final ConcurrentMap<String, JobTimeOutContext> jobMonitor = new ConcurrentHashMap<>();
 
-    public ScheduledJobExecutor(String name, int noOfThreads, int bufferPeriod, int maxRetry, JobsService jobService) {
+    public ScheduledJobExecutor(String name, int noOfThreads, int bufferPeriod, int maxRetry, JobsService jobService, ApplicationContext applicationContext) {
         this.name = name;
         this.jobService = jobService;
         this.bufferPeriod = bufferPeriod;
         if (maxRetry > 0) {
             this.maxRetry = maxRetry;
         }
-
+        this.applicationContext = applicationContext;
         executor = Executors.newScheduledThreadPool(noOfThreads + 1);
         executor.scheduleAtFixedRate(this, 0, bufferPeriod * 1000L, TimeUnit.MILLISECONDS);
     }
@@ -68,11 +70,7 @@ public class ScheduledJobExecutor implements Runnable {
                 jobs.addAll(inCompletedJobs);
             }
 
-            List<JobContext> jobContextList = new ArrayList<>();
-            jobContextList.add(new JobContext());
-            jobContextList.add(new JobContext());
-
-            for (JobContext currJob : jobContextList) {
+            for (JobContext currJob : jobs) {
                 try {
                     scheduleJob(currJob);
                 } catch (Exception e) {
@@ -95,7 +93,9 @@ public class ScheduledJobExecutor implements Runnable {
             Class<? extends ScheduledJob> classObject = jobConf.getClassObject();
             if (classObject != null) {
                 ScheduledJob scheduledJob = jobConf.getClassObject().newInstance();
+                scheduledJob.setApplicationContext(applicationContext);
                 scheduledJob.setJobContext(dbJobContext);
+                scheduledJob.setJobService(jobService);
                 scheduledJob.setExecutor(this);
 
                 LOGGER.debug("Scheduling Job : " + dbJobContext);
