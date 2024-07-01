@@ -1,0 +1,18 @@
+Job Configurations:
+1) Scheduling with MaxExecutionCount (schedule weekly for 10 times):
+startTime
+scheduleInfo
+maxExecutionCount
+isPeriodic = true
+
+2) Scheduling with JobEndTime (schedule weekly till nextTime):
+startTime
+scheduleInfo
+jobEndTime
+isPeriodic = true
+
+3) Scheduling with Period (if needed hourly):
+startTime
+scheduleInfo
+period
+isPeriodic = true
