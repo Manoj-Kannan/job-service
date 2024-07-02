@@ -57,6 +57,9 @@ public class JobContext {
     private Integer maxExecutionCount = -1;         // maximum number of times, a job can be executed
     private Integer currentExecutionCount = 0;      // current iteration count
     private Integer executionErrorCount = 0;        // error occurred count
+
+    @OneToOne
+    @JoinColumn(name = "scheduleInfoId", referencedColumnName = "id")
     private ScheduleInfo scheduleInfo;
     private Integer loggerLevel = -1;
 
